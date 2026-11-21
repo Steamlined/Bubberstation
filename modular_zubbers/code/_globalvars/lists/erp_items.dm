@@ -1,5 +1,6 @@
 GLOBAL_LIST_INIT(erp_items, list(
 	/obj/item/bdsm_candle,
+	/obj/item/breastpump,
 	/obj/item/clicker,
 	/obj/item/clothing/ears/kinky_headphones,
 	/obj/item/clothing/erp_leash,
@@ -54,5 +55,7 @@ GLOBAL_LIST_INIT(erp_items, list(
 	/obj/item/strapon_dildo,
 	/obj/item/tickle_feather,
 	/obj/item/toy/plush/aeri,
+	/obj/item/toy/plush/noble,
+	/obj/item/toy/plush/protective_protogen,
 	/obj/item/vending_refill/lustwish,
 ))

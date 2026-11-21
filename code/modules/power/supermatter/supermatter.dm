@@ -28,7 +28,10 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	critical_machine = TRUE
 	base_icon_state = "sm"
 	icon_state = "sm"
-	light_on = FALSE
+	light_on = TRUE
+	light_range = MINIMUM_USEFUL_LIGHT_RANGE
+	light_power = 2
+	light_color = SUPERMATTER_COLOUR
 
 	///The id of our supermatter
 	var/uid = 1
@@ -190,6 +193,9 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	/// If the SM is decorated with holiday lights
 	var/holiday_lights = FALSE
 
+	/// The emissive light mask for the SM
+	var/light_mask_icon = "sm-emissive"
+
 	/// Cooldown for sending emergency alerts to the common radio channel
 	COOLDOWN_DECLARE(common_radio_cooldown)
 
@@ -258,7 +264,6 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	QDEL_NULL(radio)
 	QDEL_NULL(countdown)
 	if(is_main_engine && GLOB.main_supermatter_engine == src)
-		SSpersistence.delam_counter_penalty() // SKYRAT EDIT ADDITION BEGIN - DELAM SCRAM
 		GLOB.main_supermatter_engine = null
 	QDEL_NULL(soundloop)
 	return ..()
@@ -310,7 +315,7 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	// Extra effects should always fire after the compositions are all finished
 	// Some extra effects like [/datum/sm_gas/carbon_dioxide/extra_effects]
 	// needs more than one gas and rely on a fully parsed gas_percentage.
-	for (var/gas_path in absorbed_gasmix.gases)
+	for (var/gas_path in absorbed_gasmix.moles)
 		var/datum/sm_gas/sm_gas = current_gas_behavior[gas_path]
 		sm_gas?.extra_effects(src)
 
@@ -343,16 +348,9 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	damage_factors = calculate_damage()
 	if(damage == 0) // Clear any in game forced delams if on full health.
 		set_delam(SM_DELAM_PRIO_IN_GAME, SM_DELAM_STRATEGY_PURGE)
-		station_notified = FALSE // BUBBER EDIT ADDITION - DELAM_SCRAM
 	else if(!final_countdown)
 		set_delam(SM_DELAM_PRIO_NONE, SM_DELAM_STRATEGY_PURGE) // This one cant clear any forced delams.
 	delamination_strategy.delam_progress(src)
-	// BUBBER EDIT ADDITION BEGIN - DELAM_SCRAM
-	if(damage > SUPERMATTER_SUPPRESSION_THRESHOLD && is_main_engine && !suppression_fired && world.time - SSticker.round_start_time < SCRAM_TIME_RESTRICTION)
-		investigate_log("Integrity at time of suppression signal was [100 - damage]", INVESTIGATE_ENGINE)
-		SEND_GLOBAL_SIGNAL(COMSIG_MAIN_SM_DELAMINATING, SCRAM_AUTO_FIRE)
-		suppression_fired = TRUE
-	// BUBBER EDIT ADDITION END
 	if(damage > explosion_point && !final_countdown)
 		count_down()
 
@@ -365,8 +363,8 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	merged_gasmix.temperature += device_energy * waste_multiplier / THERMAL_RELEASE_MODIFIER
 	merged_gasmix.temperature = clamp(merged_gasmix.temperature, TCMB, 2500 * waste_multiplier)
 	merged_gasmix.assert_gases(/datum/gas/plasma, /datum/gas/oxygen)
-	merged_gasmix.gases[/datum/gas/plasma][MOLES] += max(device_energy * waste_multiplier / PLASMA_RELEASE_MODIFIER, 0)
-	merged_gasmix.gases[/datum/gas/oxygen][MOLES] += max(((device_energy + merged_gasmix.temperature * waste_multiplier) - T0C) / OXYGEN_RELEASE_MODIFIER, 0)
+	merged_gasmix.moles[/datum/gas/plasma] += max(device_energy * waste_multiplier / PLASMA_RELEASE_MODIFIER, 0)
+	merged_gasmix.moles[/datum/gas/oxygen] += max(((device_energy + merged_gasmix.temperature * waste_multiplier) - T0C) / OXYGEN_RELEASE_MODIFIER, 0)
 	merged_gasmix.garbage_collect()
 	env.merge(merged_gasmix)
 	air_update_turf(FALSE, FALSE)
@@ -546,6 +544,8 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 		else
 			. += mutable_appearance(icon, "holiday_lights")
 			. += emissive_appearance(icon, "holiday_lights_e", src, alpha = src.alpha)
+	if(light_mask_icon)
+		. += emissive_appearance(icon, light_mask_icon, src, alpha = src.alpha)
 	return .
 
 /obj/machinery/power/supermatter_crystal/update_icon(updates)
@@ -689,8 +689,7 @@ GLOBAL_DATUM(main_supermatter_engine, /obj/machinery/power/supermatter_crystal)
 	var/total_moles = absorbed_gasmix.total_moles()
 	if(total_moles < MINIMUM_MOLE_COUNT) //it's not worth processing small amounts like these, total_moles can also be 0 in vacuume
 		return
-	for (var/gas_path in absorbed_gasmix.gases)
-		var/mole_count = absorbed_gasmix.gases[gas_path][MOLES]
+	for (var/gas_path, mole_count in absorbed_gasmix.moles)
 		if(mole_count < MINIMUM_MOLE_COUNT) //save processing power from small amounts like these
 			continue
 		gas_percentage[gas_path] = mole_count / total_moles

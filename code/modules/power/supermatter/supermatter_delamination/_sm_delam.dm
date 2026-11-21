@@ -41,14 +41,6 @@ GLOBAL_LIST_INIT(sm_delam_list, list(
 	if(sm.damage <= sm.warning_point) // Damage is too low, lets not
 		return FALSE
 
-	// BUBBER EDIT ADDITION BEGIN - DELAM_SCRAM
-	if(!sm.station_notified && sm.damage >= sm.danger_point - 29) // 69%. Nice.
-		if(SSjob.is_skeleton_engineering(3)) // Notify early for a skeleton crew
-			notify_delam_suppression(sm)
-		else if(sm.damage >= sm.danger_point)
-			notify_delam_suppression(sm)
-	// BUBBER EDIT ADDITION END
-
 	if (sm.damage >= sm.emergency_point && sm.damage_archived < sm.emergency_point)
 		sm.investigate_log("has entered the emergency point: Pending [sm.delamination_strategy.name].", INVESTIGATE_ENGINE)
 		message_admins("[ADMIN_VERBOSEJMP(sm)] has entered the emergency point: Pending [sm.delamination_strategy.name].")
@@ -145,12 +137,13 @@ GLOBAL_LIST_INIT(sm_delam_list, list(
 // Change how bright the rock is.
 /// [/obj/machinery/power/supermatter_crystal/process_atmos]
 /datum/sm_delam/proc/lights(obj/machinery/power/supermatter_crystal/sm)
-	sm.set_light(
-		l_range = ROUND_UP(clamp(sm.internal_energy / 500, 4, 10)),
-		l_power = ROUND_UP(clamp(sm.internal_energy / 1000, 1, 5)),
-		l_color = sm.gas_heat_power_generation > 0.8 ? SUPERMATTER_RED : SUPERMATTER_COLOUR,
-		l_on = !!sm.internal_energy,
-	)
+	if(!!sm.internal_energy)
+		sm.set_light(
+			l_range = ROUND_UP(clamp(sm.internal_energy / 500, 4, 10)),
+			l_power = ROUND_UP(clamp(sm.internal_energy / 1000, 1, 5)),
+			l_color = sm.gas_heat_power_generation > 0.8 ? SUPERMATTER_RED : SUPERMATTER_COLOUR,
+			l_on = TRUE,
+		)
 
 /// Returns a set of messages to be spouted during delams
 /// First message is start of count down, second message is quitting of count down (if sm healed), third is 5 second intervals

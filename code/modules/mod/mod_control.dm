@@ -6,7 +6,7 @@
 	worn_icon = 'icons/mob/clothing/modsuit/mod_clothing.dmi'
 
 /obj/item/mod/control
-	name = "MOD control unit"
+	name = "\improper MOD control unit"
 	desc = "The control unit of a Modular Outerwear Device, a powered suit that protects against various environments."
 	icon_state = "standard-control"
 	inhand_icon_state = "mod_control"
@@ -34,7 +34,7 @@
 	alternate_worn_layer = HANDS_LAYER+0.1 //we want it to go above generally everything, but not hands
 	interaction_flags_click = NEED_DEXTERITY|NEED_HANDS|ALLOW_RESTING
 	/// The MOD's theme, decides on some stuff like armor and statistics.
-	var/datum/mod_theme/theme = /datum/mod_theme
+	var/datum/mod_theme/theme = /datum/mod_theme/standard
 	/// Looks of the MOD.
 	var/skin = "standard"
 	/// Theme of the MOD TGUI
@@ -395,11 +395,15 @@
 	selected_module?.deactivate(display_message = TRUE)
 	wearer.apply_damage(5 / severity, BURN, spread_damage=TRUE)
 	to_chat(wearer, span_danger("You feel [src] heat up from the EMP, burning you slightly."))
-	if(wearer.stat < UNCONSCIOUS && prob(10))
+	if(!IS_UNCONSCIOUS(wearer) && prob(10))
 		wearer.emote("scream")
 
 /obj/item/mod/control/on_outfit_equip(mob/living/carbon/human/outfit_wearer, visuals_only, item_slot)
 	. = ..()
+	//Bubber Edit Start
+	if(src.no_outfit_deploy)
+		return
+	//Bubber Edit End
 	quick_activation()
 
 /obj/item/mod/control/doStrip(mob/stripper, mob/owner)
@@ -616,7 +620,7 @@
 	var/obj/item/mod/module/picked_module = locate(module_reference) in modules
 	if(!istype(picked_module))
 		return
-	picked_module.on_select()
+	picked_module.on_select(user)
 
 /obj/item/mod/control/shock(mob/living/shocking, chance, shock_source, siemens_coeff)
 	if(get_charge() < 1)
@@ -626,36 +630,37 @@
 	return ..()
 
 /obj/item/mod/control/proc/install(obj/item/mod/module/new_module, mob/user, silent = FALSE) // Bubber Edit: Silent = FALSE
+	. = FALSE // BUBBER EDIT
 	for(var/obj/item/mod/module/old_module as anything in modules)
 		if(is_type_in_list(new_module, old_module.incompatible_modules) || is_type_in_list(old_module, new_module.incompatible_modules))
 			if(user && !silent) // Bubber Edit: Silent arg
 				balloon_alert(user, "incompatible with [old_module]!")
 				playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
-			return FALSE //Bubber Edit: Return False
+			return
 	var/complexity_with_module = complexity
 	complexity_with_module += new_module.complexity
 	if(complexity_with_module > complexity_max)
-		if(user && !silent) // Bubber Edit: Silent arg
+		if(user && !silent)
 			balloon_alert(user, "above complexity max!")
 			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
-		return FALSE //Bubber Edit: Return False
+		return
 	if(!new_module.has_required_parts(mod_parts))
 		if(user && !silent) // Bubber Edit: Silent arg
 			balloon_alert(user, "lacking required parts!")
 			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
-		return FALSE //Bubber Edit:
+		return
 	if(!new_module.can_install(src))
 		if(user && !silent) // Bubber Edit: Silent arg
 			balloon_alert(user, "can't install!")
 			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
-		return FALSE // Bubber edit: Return False
+		return
 	if(SEND_SIGNAL(src, COMSIG_MOD_TRY_INSTALL_MODULE, new_module, user) & MOD_ABORT_INSTALL)
 		return
 	if(SEND_SIGNAL(new_module, COMSIG_MODULE_TRY_INSTALL, src, user) & MOD_ABORT_INSTALL)
 		return
-	finish_install(new_module, user)
+	return finish_install(new_module, user, silent) // BUBBER EDIT: Adds a return and silent arg.
 
-/obj/item/mod/control/proc/finish_install(obj/item/mod/module/new_module, mob/user)
+/obj/item/mod/control/proc/finish_install(obj/item/mod/module/new_module, mob/user, silent = FALSE) // Bubber edit: Silent = FALSE
 	new_module.forceMove(src)
 	modules += new_module
 	complexity += new_module.complexity
@@ -666,7 +671,7 @@
 	if(active && new_module.has_required_parts(mod_parts, need_active = TRUE))
 		new_module.on_part_activation()
 		new_module.part_activated = TRUE
-	if(user) // Bubber Edit: Silent Arg
+	if(user && !silent) // Bubber Edit: Silent Arg
 		balloon_alert(user, "[new_module] added")
 		playsound(src, 'sound/machines/click.ogg', 50, TRUE, SILENCED_SOUND_EXTRARANGE)
 	return TRUE // Bubber Edit: Return True
@@ -756,6 +761,9 @@
 		part.slowdown = total_slowdown / length(mod_parts)
 		if (!part_datum.sealed)
 			part.slowdown = max(part.slowdown, 0)
+		if(istype(part, /obj/item/clothing/shoes/mod))
+			var/obj/item/clothing/shoes/mod/shoe_part = part
+			shoe_part.update_footstep_sounds()
 	wearer?.update_equipment_speed_mods()
 
 /obj/item/mod/control/proc/power_off()

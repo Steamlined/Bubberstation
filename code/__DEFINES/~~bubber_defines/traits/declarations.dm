@@ -79,9 +79,22 @@
 #define TRAIT_EMAGGING_HAND "emagging_hand"
 /// Used by the irreality collar - prevents use of rituals and most spells from Acolytes.
 #define TRAIT_MANSUS_INHIBITION "mansus_inhibition"
+/// Given by wearing a heretic focus - allows Acolytes to cast forbidden school spells.
+#define TRAIT_ALLOW_HERETIC_CASTING "allow_heretic_casting"
 
 /// Trait that gives your brain traumas more resilance
 #define TRAIT_RESILIENT_TRAUMAS "trait_resilient_traumas"
 
 /// Trait used to block telepathy types (Genetics, Xenomorph, Revenant, Slime. Ideally should be all.)
 #define TRAIT_PSIONIC_DAMPENER "psionic_dampener"
+
+/// Induces a dragging slowdown to the person when applied.
+#define TRAIT_BIG_CLOTHES "trait_big_clothes" // 3 slowdown
+#define TRAIT_BULKY_CLOTHES "trait_bulky_clothes" // 4 slowdown
+#define TRAIT_HUGE_CLOTHES "trait_huge_clothes" // 5 slowdown
+
+/// Prevents a person from using vehicles.
+#define TRAIT_NO_VEHICLE "trait_no_vehicle"
+
+/// Prevents from being buckled to anything
+#define TRAIT_NO_BUCKLE "trait_no_buckle"

@@ -24,6 +24,15 @@
 	icon_state = "unberet"
 	dog_fashion = null
 
+/obj/item/clothing/head/beret/lizardgas
+	name = "Veteran Lizard Gas Beret"
+	desc = "A beret awarded to team members who have lasted a full year or more under the employment of the Lizard Gas brand! A pizza party is sure to be held on their anniversary."
+	icon_state = "/obj/item/clothing/head/beret/science/rd"
+	post_init_icon_state = "beret_badge"
+	greyscale_config = /datum/greyscale_config/beret_badge
+	greyscale_config_worn = /datum/greyscale_config/beret_badge/worn
+	greyscale_colors = "#7e1980#c9cbcb"
+
 //Ported from Kuro020 of TGMC.
 /obj/item/clothing/head/bandana/snake
 	name = "soldier's bandana"
@@ -137,4 +146,22 @@
 	worn_icon_teshari = 'modular_zubbers/icons/mob/clothing/head/hats_teshari.dmi'
 
 /obj/item/clothing/head/hats/warden/red
+	worn_icon_teshari = 'modular_zubbers/icons/mob/clothing/head/hats_teshari.dmi'
+
+/obj/item/clothing/head/small_bow
+	greyscale_config_worn_teshari = /datum/greyscale_config/small_bow/worn/teshari
+
+/obj/item/clothing/head/large_bow
+	greyscale_config_worn_teshari = /datum/greyscale_config/large_bow/worn/teshari
+
+/obj/item/clothing/head/back_bow
+	greyscale_config_worn_teshari = /datum/greyscale_config/back_bow/worn/teshari
+
+/obj/item/clothing/head/sweet_bow
+	greyscale_config_worn_teshari = /datum/greyscale_config/sweet_bow/worn/teshari
+
+/obj/item/clothing/head/costume/jesteralt
+	greyscale_config_worn_teshari = /datum/greyscale_config/jester_hat_alt/worn/teshari
+
+/obj/item/clothing/head/soft/propeller_hat
 	worn_icon_teshari = 'modular_zubbers/icons/mob/clothing/head/hats_teshari.dmi'
